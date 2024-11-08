@@ -47,3 +47,5 @@ typedef struct{
     __uint8_t Green;
     __uint8_t Red;
 }t_RGB24;
+
+extern void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const char *__restrict__ RGBA_output_filename, const char *__restrict__ RGB24_output_filename);
