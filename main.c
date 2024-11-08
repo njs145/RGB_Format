@@ -29,5 +29,5 @@
 
 int main(void)
 {
-    BitMap_Extract_RGB_Data("Bitmap_picture_DOG.bmp", "Bitmap_picture_RGBA.RAW", "Bitmap_picture_RGB24.RAW");
+    BitMap_Extract_RGB_Data("SampleImage/BitMap/Bitmap_picture_DOG.bmp", "SampleImage/RAW/Bitmap_picture_RGBA.RAW", "SampleImage/RAW/Bitmap_picture_RGB24.RAW");
 }

@@ -10,7 +10,7 @@
                 "${file}",
                 "BitMap/BitMap.c", 
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/Build/main"
             ],
             "options": {
                 "cwd": "${fileDirname}"

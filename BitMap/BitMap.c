@@ -71,13 +71,13 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
         BitMap_convert_RGBAtoRGB24();
 
         fp_test_RGBA = fopen(RGBA_output_filename, "w");
-        fp_test_RGB24 = fopen("Bitmap_picture_RGB24.RAW", "w");
+        fp_test_RGB24 = fopen(RGB24_output_filename, "w");
 
         fputs((char *)pixel_data_RGBA, fp_test_RGBA);
         fputs((char *)pixel_data_RGB24, fp_test_RGB24);
 
         RGB_fread(RGBA_output_filename, fp_test_RGBA, &buf_RGBA, &RGBA_Size);
-        RGB_fread("Bitmap_picture_RGB24.RAW", fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+        RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
 
         BitMap_print_pixeldata();
     }
@@ -89,11 +89,11 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
         /* 사이즈 추출 */
         format_RGB24_Size = (size - BitMap_File_Header->bfOffBits);
 
-        fp_test_RGB24 = fopen("Bitmap_picture_RGB24.RAW", "w");
+        fp_test_RGB24 = fopen(RGB24_output_filename, "w");
 
         fputs((char *)pixel_data_RGB24, fp_test_RGB24);
         
-        RGB_fread("Bitmap_picture_RGB24.RAW", fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+        RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
     }
 
     free(buf);
