@@ -11,11 +11,11 @@
 
 static t_BFH *BitMap_File_Header;
 static t_DIB *BitMap_Info_Header;
-static t_BGRA *pixel_data_BGRA = NULL;
-static t_BGR24 *pixel_data_BGR24 = NULL;
+static t_RGBA *pixel_data_RGBA = NULL;
+static t_RGB24 *pixel_data_RGB24 = NULL;
 static __uint32_t size;
-static __uint32_t format_BGRA_Size;
-static __uint32_t format_BGR24_Size;
+static __uint32_t format_RGBA_Size;
+static __uint32_t format_RGB24_Size;
 
 /*----------------------------------------------------------------------------------------------------
 ************************************* LOCAL CONSTANT DEFINITIONS *************************************
@@ -30,9 +30,11 @@ static __uint32_t format_BGR24_Size;
 /*---------------------------------------------------------------------------------------------------
 ************************************* LOCAL FUNCTION DEFINITIONS ************************************
 ---------------------------------------------------------------------------------------------------*/
+
 static void BitMap_print_header(t_BFH *BitMap_File_Header, t_DIB *BitMap_Info_Header);
 static void BitMap_print_pixeldata(void);
-static void BitMap_convert_BGRAtoBGR24(void);
+static void BitMap_convert_RGBAtoRGB24(void);
+static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size);
 
 /*----------------------------------------------------------------------------------------------------
 **************************************** FUNCTION DEFINITIONS ****************************************
@@ -40,39 +42,63 @@ static void BitMap_convert_BGRAtoBGR24(void);
 
 int main(void)
 {
-    FILE *fp;
+    FILE *fp, *fp_test_RGBA, *fp_test_RGB24;
+
     char *buf = NULL;
 
-    /* 파일 포인터 받아오기 */
-    fp = fopen("Bitmap_picture_BGR32.bmp", "r");
-    
-    /* 파일 사이즈 구하기. */
-    fseek(fp, 0, SEEK_END);
-    size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    
-    /* 파일 사이즈 만큼 메모리 할당. */
-    buf = malloc(size);
+    char *buf_RGBA = NULL;
+    char *buf_RGB24 = NULL;
 
-    /* 파일 포인터로부터 파일 읽기 */
-    fread(buf, sizeof(char), size, fp);
+    __uint32_t RGBA_Size;
+    __uint32_t RGB24_Size;
+    
+    RGB_fread("Bitmap_picture_DOG.bmp", fp, &buf, &size);
 
     /* Bitmap 헤더 추출 */
     BitMap_File_Header = (t_BFH*)(buf + sizeof(__uint16_t));
     BitMap_Info_Header = (t_DIB*)(buf + sizeof(__uint16_t) + sizeof(t_BFH));
 
-    /* Bitmap 데이터 추출 */
-    pixel_data_BGRA = (t_BGRA *)(buf + BitMap_File_Header->bfOffBits);
+    BitMap_print_header(BitMap_File_Header, BitMap_Info_Header);
 
-    /* 사이즈 추출 */
-    format_BGRA_Size = (size - BitMap_File_Header->bfOffBits);
-    format_BGR24_Size = (format_BGRA_Size / 4) * 3;
+    if(BitMap_Info_Header->t_DIB_16Bit.t_DIB_Bit.biBitCount == 0x20)
+    {
+        /* Bitmap 데이터 추출 */
+        pixel_data_RGBA = (t_RGBA *)(buf + BitMap_File_Header->bfOffBits);
 
-    BitMap_print_pixeldata();
+        /* 사이즈 추출 */
+        format_RGBA_Size = (size - BitMap_File_Header->bfOffBits);
+        format_RGB24_Size = (format_RGBA_Size / 4) * 3;
+        BitMap_convert_RGBAtoRGB24();
 
-    BitMap_convert_BGRAtoBGR24();
+        fp_test_RGBA = fopen("Bitmap_picture_RGBA.RAW", "w");
+        fp_test_RGB24 = fopen("Bitmap_picture_RGB24.RAW", "w");
 
-    // BitMap_print_header(BitMap_File_Header, BitMap_Info_Header);
+        fputs((char *)pixel_data_RGBA, fp_test_RGBA);
+        fputs((char *)pixel_data_RGB24, fp_test_RGB24);
+
+        RGB_fread("Bitmap_picture_RGBA.RAW", fp_test_RGBA, &buf_RGBA, &RGBA_Size);
+        RGB_fread("Bitmap_picture_RGB24.RAW", fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+
+        BitMap_print_pixeldata();
+    }
+    else
+    {
+        /* Bitmap 데이터 추출 */
+        pixel_data_RGB24 = (t_RGB24 *)(buf + BitMap_File_Header->bfOffBits);
+
+        /* 사이즈 추출 */
+        format_RGB24_Size = (size - BitMap_File_Header->bfOffBits);
+
+        fp_test_RGB24 = fopen("Bitmap_picture_RGB24.RAW", "w");
+
+        fputs((char *)pixel_data_RGB24, fp_test_RGB24);
+        
+        RGB_fread("Bitmap_picture_RGB24.RAW", fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+    }
+
+    free(buf);
+    free(buf_RGBA);
+    free(buf_RGB24);
 }
 
 static void BitMap_print_header(t_BFH *BitMap_File_Header, t_DIB *BitMap_Info_Header)
@@ -94,22 +120,39 @@ static void BitMap_print_header(t_BFH *BitMap_File_Header, t_DIB *BitMap_Info_He
 
 static void BitMap_print_pixeldata(void)
 {
-    __uint32_t lastindex = (format_BGRA_Size / 4) - 1;
-    printf("RGBA : Blue: 0x%x Green: 0x%x Red: 0x%x Alpha: 0x%x\n",pixel_data_BGRA[lastindex].Blue, pixel_data_BGRA[lastindex].Green, pixel_data_BGRA[lastindex].Red, pixel_data_BGRA[lastindex].Alpha);
+    __uint32_t lastindex = (format_RGBA_Size / 4) - 1;
+    printf("RGBA : Blue: 0x%x Green: 0x%x Red: 0x%x Alpha: 0x%x\n",pixel_data_RGBA[lastindex].Blue, pixel_data_RGBA[lastindex].Green, pixel_data_RGBA[lastindex].Red, pixel_data_RGBA[lastindex].Alpha);
 }
 
-static void BitMap_convert_BGRAtoBGR24(void)
+static void BitMap_convert_RGBAtoRGB24(void)
 {
     __uint32_t loop;
 
-    pixel_data_BGR24 = malloc(format_BGR24_Size);
+    pixel_data_RGB24 = malloc(format_RGB24_Size);
 
-    for(loop = 0; loop < (format_BGRA_Size / 4); loop ++)
+    for(loop = 0; loop < (format_RGBA_Size / 4); loop ++)
     {
-        pixel_data_BGR24[loop].Blue = pixel_data_BGRA[loop].Blue;
-        pixel_data_BGR24[loop].Green = pixel_data_BGRA[loop].Green;
-        pixel_data_BGR24[loop].Red = pixel_data_BGRA[loop].Red;
+        pixel_data_RGB24[loop].Blue = pixel_data_RGBA[loop].Blue;
+        pixel_data_RGB24[loop].Green = pixel_data_RGBA[loop].Green;
+        pixel_data_RGB24[loop].Red = pixel_data_RGBA[loop].Red;
     }
 
-    printf("RGB24: Blue: 0x%x Green: 0x%x Red: 0x%x\n",pixel_data_BGR24[loop - 1].Blue, pixel_data_BGR24[loop - 1].Green, pixel_data_BGR24[loop - 1].Red);
+    printf("RGB24: Blue: 0x%x Green: 0x%x Red: 0x%x\n",pixel_data_RGB24[loop - 1].Blue, pixel_data_RGB24[loop - 1].Green, pixel_data_RGB24[loop - 1].Red);
+}
+
+static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size)
+{
+    /* 파일 포인터 받아오기 */
+    fp = fopen(__filename, "r");
+
+    /* 파일 사이즈 구하기. */
+    fseek(fp, 0, SEEK_END);
+    *size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    /* 파일 사이즈 만큼 메모리 할당. */
+    *buf = malloc(*size);
+
+    /* 파일 포인터로부터 파일 읽기 */
+    fread(*buf, sizeof(char), *size, fp);
 }

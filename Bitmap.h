@@ -40,10 +40,10 @@ typedef struct{
     __uint8_t Green;
     __uint8_t Red;
     __uint8_t Alpha;
-}t_BGRA;
+}t_RGBA;
 
 typedef struct{
     __uint8_t Blue;
     __uint8_t Green;
     __uint8_t Red;
-}t_BGR24;
+}t_RGB24;
