@@ -1,0 +1,5 @@
+### ignore Build directory
+*Build/
+
+### ignore SampleImage directory
+*SampleImage/
