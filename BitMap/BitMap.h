@@ -1,5 +1,11 @@
 #include "stdlib.h"
 
+#define TYPE_RGB565_LITTLE  0
+#define TYPE_RGB565_BIG     1
+
+#define TYPE_RGB555_LITTLE  0
+#define TYPE_RGB555_BIG     1
+
 typedef struct{
     __uint32_t bfSize;
     union {
@@ -48,4 +54,4 @@ typedef struct{
     __uint8_t Red;
 }t_RGB24;
 
-extern void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const char *__restrict__ RGBA_output_filename, const char *__restrict__ RGB24_output_filename);
+extern void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const char *__restrict__ RGBA_output_filename, const char *__restrict__ RGB24_output_filename, const char *__restrict__ RGB565_output_filename, const char *__restrict__ RGB555_output_filename);

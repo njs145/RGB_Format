@@ -13,9 +13,13 @@ static t_BFH *BitMap_File_Header;
 static t_DIB *BitMap_Info_Header;
 static t_RGBA *pixel_data_RGBA = NULL;
 static t_RGB24 *pixel_data_RGB24 = NULL;
+static __uint16_t *pixel_data_RGB565 = NULL;
+static __uint16_t *pixel_data_RGB555 = NULL;
 static __uint32_t size;
 static __uint32_t format_RGBA_Size;
 static __uint32_t format_RGB24_Size;
+static __uint32_t format_RGB565_Size;
+static __uint32_t format_RGB555_Size;
 
 /*----------------------------------------------------------------------------------------------------
 ************************************* LOCAL CONSTANT DEFINITIONS *************************************
@@ -35,22 +39,26 @@ static void BitMap_print_header(t_BFH *BitMap_File_Header, t_DIB *BitMap_Info_He
 static void BitMap_print_pixeldata(void);
 static void BitMap_convert_RGBAtoRGB24(void);
 static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size);
+static void BitMap_convert_RGB888toRGB565(__uint32_t type);
+static void BitMap_convert_RGB888toRGB555(__uint32_t type);
 
 /*----------------------------------------------------------------------------------------------------
 **************************************** FUNCTION DEFINITIONS ****************************************
 ----------------------------------------------------------------------------------------------------*/
 
-void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const char *__restrict__ RGBA_output_filename, const char *__restrict__ RGB24_output_filename)
+void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const char *__restrict__ RGBA_output_filename, const char *__restrict__ RGB24_output_filename, const char *__restrict__ RGB565_output_filename, const char *__restrict__ RGB555_output_filename)
 {
-    FILE *fp, *fp_test_RGBA, *fp_test_RGB24;
+    FILE *fp, *fp_test_RGBA, *fp_test_RGB24, *fp_test_RGB565, *fp_test_RGB555;
 
     char *buf = NULL;
 
     char *buf_RGBA = NULL;
     char *buf_RGB24 = NULL;
+    char *buf_RGB565 = NULL;
 
     __uint32_t RGBA_Size;
     __uint32_t RGB24_Size;
+    __uint32_t RGB565_Size;
     
     RGB_fread(BitMap_filename, fp, &buf, &size);
 
@@ -76,8 +84,8 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
         fputs((char *)pixel_data_RGBA, fp_test_RGBA);
         fputs((char *)pixel_data_RGB24, fp_test_RGB24);
 
-        RGB_fread(RGBA_output_filename, fp_test_RGBA, &buf_RGBA, &RGBA_Size);
-        RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+        // RGB_fread(RGBA_output_filename, fp_test_RGBA, &buf_RGBA, &RGBA_Size);
+        // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
 
         BitMap_print_pixeldata();
     }
@@ -93,8 +101,16 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
 
         fputs((char *)pixel_data_RGB24, fp_test_RGB24);
         
-        RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+        // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
     }
+
+    BitMap_convert_RGB888toRGB565(TYPE_RGB565_BIG);
+    fp_test_RGB565 = fopen(RGB565_output_filename , "w");
+    fwrite((char *)pixel_data_RGB565, sizeof(char),  format_RGB565_Size, fp_test_RGB565);
+
+    BitMap_convert_RGB888toRGB555(TYPE_RGB555_BIG);
+    fp_test_RGB555 = fopen(RGB555_output_filename , "w");
+    fwrite((char *)pixel_data_RGB555, sizeof(char),  format_RGB555_Size, fp_test_RGB555);
 
     free(buf);
     free(buf_RGBA);
@@ -138,6 +154,66 @@ static void BitMap_convert_RGBAtoRGB24(void)
     }
 
     printf("RGB24: Blue: 0x%x Green: 0x%x Red: 0x%x\n",pixel_data_RGB24[loop - 1].Blue, pixel_data_RGB24[loop - 1].Green, pixel_data_RGB24[loop - 1].Red);
+}
+
+static void BitMap_convert_RGB888toRGB565(__uint32_t type)
+{
+    __uint32_t loop;
+    __uint8_t rgb565_Blue, rgb565_Green, rgb565_Red;
+
+    format_RGB565_Size = (format_RGB24_Size / 24) * 16;
+
+    pixel_data_RGB565 = malloc(format_RGB565_Size);
+
+    for(loop = 0; loop < (format_RGB24_Size / 3); loop ++)
+    {
+        rgb565_Blue = (__uint8_t)(pixel_data_RGB24[loop].Blue >> 3);
+        rgb565_Green = (__uint8_t)(pixel_data_RGB24[loop].Green >> 2);
+        rgb565_Red = (__uint8_t)(pixel_data_RGB24[loop].Red >> 3);
+
+        switch(type)
+        {
+            case TYPE_RGB565_LITTLE:
+                pixel_data_RGB565[loop] = (__uint16_t)((rgb565_Blue << 11) | (rgb565_Green << 5) | rgb565_Red);
+            break;
+
+            case TYPE_RGB565_BIG:
+                pixel_data_RGB565[loop] = (__uint16_t)(((rgb565_Green & 0x7) << 13) | (rgb565_Red << 8) | (rgb565_Blue << 3) | ((rgb565_Green & 0x38) >> 3));
+            break;
+        }
+    }
+
+    printf("RGB565: 0x%x\n", pixel_data_RGB565[loop - 1]);
+}
+
+static void BitMap_convert_RGB888toRGB555(__uint32_t type)
+{
+    __uint32_t loop;
+    __uint8_t rgb555_Blue, rgb555_Green, rgb555_Red;
+
+    format_RGB555_Size = (format_RGB24_Size / 24) * 16;
+
+    pixel_data_RGB555 = malloc(format_RGB565_Size);
+
+    for(loop = 0; loop < (format_RGB24_Size / 3); loop ++)
+    {
+        rgb555_Blue = (__uint8_t)(pixel_data_RGB24[loop].Blue >> 3);
+        rgb555_Green = (__uint8_t)(pixel_data_RGB24[loop].Green >> 3);
+        rgb555_Red = (__uint8_t)(pixel_data_RGB24[loop].Red >> 3);
+
+        switch(type)
+        {
+            case TYPE_RGB555_LITTLE:
+                pixel_data_RGB555[loop] = (__uint16_t)((rgb555_Blue << 10) | (rgb555_Green << 5) | rgb555_Red);
+            break;
+
+            case TYPE_RGB555_BIG:
+                pixel_data_RGB555[loop] = (__uint16_t)(((rgb555_Green & 0x7) << 13) | (rgb555_Red << 8) | (rgb555_Blue << 2) | ((rgb555_Green & 0x18) >> 3));
+            break;
+        }
+    }
+
+    printf("RGB555: 0x%x\n", pixel_data_RGB565[loop - 1]);
 }
 
 static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size)
