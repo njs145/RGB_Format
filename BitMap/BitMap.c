@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "BitMap.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 /*---------------------------------------------------------------------------------------------------
 ************************************ GLOBAL VARIABLE DEFINITIONS ************************************
@@ -46,9 +48,10 @@ static void BitMap_convert_RGB888toRGB555(__uint32_t type);
 **************************************** FUNCTION DEFINITIONS ****************************************
 ----------------------------------------------------------------------------------------------------*/
 
-void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const char *__restrict__ RGBA_output_filename, const char *__restrict__ RGB24_output_filename, const char *__restrict__ RGB565_output_filename, const char *__restrict__ RGB555_output_filename)
+void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename)
 {
-    FILE *fp, *fp_test_RGBA, *fp_test_RGB24, *fp_test_RGB565, *fp_test_RGB555;
+    FILE *fp; 
+    int fp_test_RGBA, fp_test_RGB24, fp_test_RGB565, fp_test_RGB555;
 
     char *buf = NULL;
 
@@ -59,6 +62,11 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
     __uint32_t RGBA_Size;
     __uint32_t RGB24_Size;
     __uint32_t RGB565_Size;
+
+    fp_test_RGBA = open("Build/output/RGBA.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fp_test_RGB24 = open("Build/output/RGB24.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fp_test_RGB565 = open("Build/output/RGB565.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fp_test_RGB555 = open("Build/output/RGB555.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     
     RGB_fread(BitMap_filename, fp, &buf, &size);
 
@@ -78,11 +86,8 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
         format_RGB24_Size = (format_RGBA_Size / 4) * 3;
         BitMap_convert_RGBAtoRGB24();
 
-        fp_test_RGBA = fopen(RGBA_output_filename, "w");
-        fp_test_RGB24 = fopen(RGB24_output_filename, "w");
-
-        fputs((char *)pixel_data_RGBA, fp_test_RGBA);
-        fputs((char *)pixel_data_RGB24, fp_test_RGB24);
+        write(fp_test_RGBA, (char *)pixel_data_RGBA,  format_RGBA_Size);
+        write(fp_test_RGB24, (char *)pixel_data_RGB24,  format_RGB24_Size);
 
         // RGB_fread(RGBA_output_filename, fp_test_RGBA, &buf_RGBA, &RGBA_Size);
         // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
@@ -91,26 +96,23 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, const cha
     }
     else
     {
+        close(fp_test_RGBA);
         /* Bitmap 데이터 추출 */
         pixel_data_RGB24 = (t_RGB24 *)(buf + BitMap_File_Header->bfOffBits);
 
         /* 사이즈 추출 */
         format_RGB24_Size = (size - BitMap_File_Header->bfOffBits);
 
-        fp_test_RGB24 = fopen(RGB24_output_filename, "w");
-
-        fputs((char *)pixel_data_RGB24, fp_test_RGB24);
+        write(fp_test_RGB24, (char *)pixel_data_RGB24,  format_RGB24_Size);
         
         // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
     }
 
     BitMap_convert_RGB888toRGB565(TYPE_RGB565_BIG);
-    fp_test_RGB565 = fopen(RGB565_output_filename , "w");
-    fwrite((char *)pixel_data_RGB565, sizeof(char),  format_RGB565_Size, fp_test_RGB565);
+    write(fp_test_RGB565, (char *)pixel_data_RGB565,  format_RGB565_Size);
 
     BitMap_convert_RGB888toRGB555(TYPE_RGB555_BIG);
-    fp_test_RGB555 = fopen(RGB555_output_filename , "w");
-    fwrite((char *)pixel_data_RGB555, sizeof(char),  format_RGB555_Size, fp_test_RGB555);
+    write(fp_test_RGB555, (char *)pixel_data_RGB555,  format_RGB555_Size);
 
     free(buf);
     free(buf_RGBA);
