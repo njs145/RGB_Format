@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "BitMap/BitMap.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 /*---------------------------------------------------------------------------------------------------
 ************************************ GLOBAL VARIABLE DEFINITIONS ************************************
@@ -29,5 +31,31 @@
 
 int main(void)
 {
-    BitMap_Extract_RGB_Data("SampleImage/BitMap/Bitmap_picture_DOG.bmp");
+    int fp_test_RGB24, fp_test_RGB565, fp_test_RGB555;
+    char *buff_RGB24, *buff_RGB565, *buff_RGB555 = NULL;
+    __uint32_t size_RGB24, size_RGB565, size_RGB555;
+
+    fp_test_RGB24 = open("Build/output/RGB24.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fp_test_RGB565 = open("Build/output/RGB565.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    fp_test_RGB555 = open("Build/output/RGB555.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+    BitMap_Extract_RGB_Data("SampleImage/BitMap/Bitmap_picture_DOG.bmp", &buff_RGB24, &size_RGB24);
+
+    size_RGB565 = (size_RGB24 / 24) * 16;
+    buff_RGB565 = malloc(size_RGB565);
+    BitMap_convert_RGB888toRGB565(TYPE_RGB565_LITTLE, size_RGB24, buff_RGB24, buff_RGB565);
+    write(fp_test_RGB565, (char *)buff_RGB565,  size_RGB565);
+    free(buff_RGB565);
+
+    size_RGB555 = (size_RGB24 / 24) * 16;
+    buff_RGB555 = malloc(size_RGB555);
+    BitMap_convert_RGB888toRGB555(TYPE_RGB555_LITTLE, size_RGB24, buff_RGB24, buff_RGB555);
+    write(fp_test_RGB555, (char *)buff_RGB555,  size_RGB555);
+    free(buff_RGB555);
+
+    /* 맨 마지막 */
+    free(buff_RGB24);
+
+    
+
 }

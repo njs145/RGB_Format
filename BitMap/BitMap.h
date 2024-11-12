@@ -54,4 +54,6 @@ typedef struct{
     __uint8_t Red;
 }t_RGB24;
 
-extern void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename);
+extern void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RGB24_buf, __uint32_t *size);
+extern void BitMap_convert_RGB888toRGB565(__uint32_t type, __uint32_t size_RGB24, char *RGB24_buff, char *RGB565_buff);
+extern void BitMap_convert_RGB888toRGB555(__uint32_t type, __uint32_t size_RGB24, char *RGB24_buff, char *RGB555_buff);
