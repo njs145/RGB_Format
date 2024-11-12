@@ -3,3 +3,6 @@
 
 ### ignore SampleImage directory
 *SampleImage/BitMap
+
+### ignore Converted RAW Data
+*Build/output
