@@ -6,6 +6,8 @@
 #define TYPE_RGB555_LITTLE  0
 #define TYPE_RGB555_BIG     1
 
+#define BMP_HEADER_SIZE     0x36        
+
 typedef struct{
     __uint32_t bfSize;
     union {

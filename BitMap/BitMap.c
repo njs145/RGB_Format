@@ -39,6 +39,7 @@ static __uint32_t size_RGB555;
 
 static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size);
 static void BitMap_convert_RGBAtoRGB24(t_RGBA *RGBA_buff, char *RGB24_buff);
+static void BitMap_Convert_RGB8BPPtoRGBA(char *RGBA_buff, char *RGB8BPP_buff, __uint32_t size_RGB8BPP, t_RGBA *ColorPalette);
 static void BitMap_print_header(t_BFH *BitMap_File_Header, t_DIB *BitMap_Info_Header);
 static void BitMap_print_pixeldata(void);
 
@@ -49,8 +50,9 @@ static void BitMap_print_pixeldata(void);
 void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RGB24_buf, __uint32_t *size)
 {
     FILE *fp;
-    char *buf = NULL;
-    t_RGBA *RGBA_buf = NULL;
+    int fp_test_RGB24 = open("Build/output/RGB24.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    char *buf, *RGB8BPP_buf = NULL;
+    t_RGBA *RGBA_buf, *RGB8BPP_colorpalette = NULL;
     __uint32_t file_size; 
     
     RGB_fread(BitMap_filename, fp, &buf, &file_size);
@@ -61,31 +63,53 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
 
     BitMap_print_header(BitMap_File_Header, BitMap_Info_Header);
 
-    if(BitMap_Info_Header->t_DIB_16Bit.t_DIB_Bit.biBitCount == 0x20)
+    switch(BitMap_Info_Header->t_DIB_16Bit.t_DIB_Bit.biBitCount)
     {
-        /* RGBA 데이터 추출 */
-        RGBA_buf = (t_RGBA *)(buf + BitMap_File_Header->bfOffBits);
+        case 32:
+            /* RGBA 데이터 추출 */
+            RGBA_buf = (t_RGBA *)(buf + BitMap_File_Header->bfOffBits);
+    
+            /* RGB24 사이즈 추출 */
+            size_RGBA = (file_size - BitMap_File_Header->bfOffBits);
+            *size = (size_RGBA / 4) * 3;
+    
+            *RGB24_buf = malloc(*size);
+    
+            /* RGB24 데이터 추출 */
+            BitMap_convert_RGBAtoRGB24(RGBA_buf, *RGB24_buf);
+        break;
 
-        /* RGB24 사이즈 추출 */
-        size_RGBA = (file_size - BitMap_File_Header->bfOffBits);
-        *size = (size_RGBA / 4) * 3;
+        case 16:
+            /* RGB24 데이터 추출 */
+            *RGB24_buf = (char *)(buf + BitMap_File_Header->bfOffBits);
 
-        *RGB24_buf = malloc(*size);
+            /* RGB24 사이즈 추출 */
+            *size = (file_size - BitMap_File_Header->bfOffBits);
 
-        /* RGB24 데이터 추출 */
-        BitMap_convert_RGBAtoRGB24(RGBA_buf, *RGB24_buf);
+            // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
+        break;
+
+        case 8:
+            /* RGB8BPP 컬러 파레트 및 데이터 추출 */
+            RGB8BPP_colorpalette = (t_RGBA *)(buf + BMP_HEADER_SIZE);
+            RGB8BPP_buf = (char *)(buf + BitMap_File_Header->bfOffBits);
+
+            size_RGBA = (file_size - BitMap_File_Header->bfOffBits) * 4;
+            *size = (file_size - BitMap_File_Header->bfOffBits) * 3;
+            RGBA_buf = malloc(size_RGBA);
+            *RGB24_buf = malloc(*size);
+
+            BitMap_Convert_RGB8BPPtoRGBA((char *)RGBA_buf, RGB8BPP_buf, (size_RGBA / 4), RGB8BPP_colorpalette);
+            BitMap_convert_RGBAtoRGB24(RGBA_buf, *RGB24_buf);
+
+            free(RGBA_buf);
+        break;
+
+        
     }
-    else
-    {
-        /* RGB24 데이터 추출 */
-        *RGB24_buf = (char *)(buf + BitMap_File_Header->bfOffBits);
 
-        /* RGB24 사이즈 추출 */
-        *size = (file_size - BitMap_File_Header->bfOffBits);
-      
-        // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
-    }
-
+    write(fp_test_RGB24, (char *)*RGB24_buf, *size);
+    BitMap_print_header(BitMap_File_Header, BitMap_Info_Header);
     free(buf);
 }
 
@@ -126,6 +150,20 @@ static void BitMap_convert_RGBAtoRGB24(t_RGBA *RGBA_buff, char *RGB24_buff)
     }
 
     printf("RGB24: Blue: 0x%x Green: 0x%x Red: 0x%x\n",pixel_data_RGB24[loop - 1].Blue, pixel_data_RGB24[loop - 1].Green, pixel_data_RGB24[loop - 1].Red);
+}
+
+static void BitMap_Convert_RGB8BPPtoRGBA(char *RGBA_buff, char *RGB8BPP_buff, __uint32_t size_RGB8BPP, t_RGBA *ColorPalette)
+{
+    __uint32_t loop;
+    __uint8_t RGB8BPP_data;
+    t_RGBA *pixel_data_RGBA = (t_RGBA *)RGBA_buff;
+    t_RGBA* colorpalette = ColorPalette;
+
+    for(loop = 0; loop < size_RGB8BPP; loop ++)
+    {
+        RGB8BPP_data = RGB8BPP_buff[loop];
+        pixel_data_RGBA[loop] = colorpalette[RGB8BPP_data];
+    }
 }
 
 void BitMap_convert_RGB888toRGB565(__uint32_t type, __uint32_t size_RGB24, char *RGB24_buff, char *RGB565_buff)

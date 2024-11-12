@@ -35,11 +35,10 @@ int main(void)
     char *buff_RGB24, *buff_RGB565, *buff_RGB555 = NULL;
     __uint32_t size_RGB24, size_RGB565, size_RGB555;
 
-    fp_test_RGB24 = open("Build/output/RGB24.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     fp_test_RGB565 = open("Build/output/RGB565.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     fp_test_RGB555 = open("Build/output/RGB555.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
-    BitMap_Extract_RGB_Data("SampleImage/Bitmap_picture_DOG.bmp", &buff_RGB24, &size_RGB24);
+    BitMap_Extract_RGB_Data("SampleImage/Bitmap_picture_DOG_256Bit.bmp", &buff_RGB24, &size_RGB24);
 
     /* RGB565 추출 */
     size_RGB565 = (size_RGB24 / 24) * 16;
@@ -55,6 +54,7 @@ int main(void)
     write(fp_test_RGB555, (char *)buff_RGB555,  size_RGB555);
     free(buff_RGB555);
 
+    /* 번외: RGB8bpp 포맷을 RGB888로 변경 */
     
 
     /* 맨 마지막 */

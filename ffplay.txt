@@ -1,0 +1,4 @@
+ffplay -video_size 426x296 -pixel_format bgra RGBA.RAW
+ffplay -video_size 426x296 -pixel_format bgr24 RGB24.RAW
+ffplay -video_size 426x296 -pixel_format bgr556le RGB565.RAW
+ffplay -video_size 426x296 -pixel_format bgr555le RGB555.RAW
