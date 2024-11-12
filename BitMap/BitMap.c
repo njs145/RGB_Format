@@ -3,10 +3,11 @@
 ---------------------------------------------------------------------------------------------------*/
 #include <stdlib.h>
 #include <stdio.h>
-#include "BitMap.h"
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "BitMap.h"
+#include "../load/load.h"
 /*---------------------------------------------------------------------------------------------------
 ************************************ GLOBAL VARIABLE DEFINITIONS ************************************
 ---------------------------------------------------------------------------------------------------*/
@@ -37,7 +38,6 @@ static __uint32_t size_RGB555;
 ************************************* LOCAL FUNCTION DEFINITIONS ************************************
 ---------------------------------------------------------------------------------------------------*/
 
-static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size);
 static void BitMap_convert_RGBAtoRGB24(t_RGBA *RGBA_buff, char *RGB24_buff);
 static void BitMap_Convert_RGB8BPPtoRGBA(char *RGBA_buff, char *RGB8BPP_buff, __uint32_t size_RGB8BPP, t_RGBA *ColorPalette);
 static void BitMap_print_header(t_BFH *BitMap_File_Header, t_DIB *BitMap_Info_Header);
@@ -85,8 +85,6 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
 
             /* RGB24 사이즈 추출 */
             *size = (file_size - BitMap_File_Header->bfOffBits);
-
-            // RGB_fread(RGB24_output_filename, fp_test_RGB24, &buf_RGB24, &RGB24_Size);
         break;
 
         case 8:
@@ -94,11 +92,14 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
             RGB8BPP_colorpalette = (t_RGBA *)(buf + BMP_HEADER_SIZE);
             RGB8BPP_buf = (char *)(buf + BitMap_File_Header->bfOffBits);
 
+            /*RGBA 및 RGB24 사이즈 추출 */
             size_RGBA = (file_size - BitMap_File_Header->bfOffBits) * 4;
             *size = (file_size - BitMap_File_Header->bfOffBits) * 3;
+
             RGBA_buf = malloc(size_RGBA);
             *RGB24_buf = malloc(*size);
 
+            /* RGBA로 변환 후 RGB24 데이터 추출 */
             BitMap_Convert_RGB8BPPtoRGBA((char *)RGBA_buf, RGB8BPP_buf, (size_RGBA / 4), RGB8BPP_colorpalette);
             BitMap_convert_RGBAtoRGB24(RGBA_buf, *RGB24_buf);
 
@@ -109,7 +110,6 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
     }
 
     write(fp_test_RGB24, (char *)*RGB24_buf, *size);
-    BitMap_print_header(BitMap_File_Header, BitMap_Info_Header);
     free(buf);
 }
 
@@ -224,21 +224,4 @@ void BitMap_convert_RGB888toRGB555(__uint32_t type, __uint32_t size_RGB24, char 
     }
 
     printf("RGB555: 0x%x\n", pixel_data_RGB555[loop - 1]);
-}
-
-static void RGB_fread(const char *__restrict__ __filename, FILE *fp, char **buf, __uint32_t *size)
-{
-    /* 파일 포인터 받아오기 */
-    fp = fopen(__filename, "r");
-
-    /* 파일 사이즈 구하기. */
-    fseek(fp, 0, SEEK_END);
-    *size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    /* 파일 사이즈 만큼 메모리 할당. */
-    *buf = malloc(*size);
-
-    /* 파일 포인터로부터 파일 읽기 */
-    fread(*buf, sizeof(char), *size, fp);
 }
