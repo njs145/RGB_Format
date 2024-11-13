@@ -1,3 +1,6 @@
+#ifndef __BitMap_c
+#define __BitMap_c
+
 /*---------------------------------------------------------------------------------------------------
 ********************************************* INCLUDES **********************************************
 ---------------------------------------------------------------------------------------------------*/
@@ -47,7 +50,7 @@ static void BitMap_print_pixeldata(void);
 **************************************** FUNCTION DEFINITIONS ****************************************
 ----------------------------------------------------------------------------------------------------*/
 
-void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RGB24_buf, __uint32_t *size)
+void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RGB24_buf, __uint32_t *size, t_DIB *DIB)
 {
     FILE *fp;
     int fp_test_RGB24 = open("Build/output/RGB24.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -60,6 +63,9 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
     /* Bitmap 헤더 추출 */
     BitMap_File_Header = (t_BFH*)(buf + sizeof(__uint16_t));
     BitMap_Info_Header = (t_DIB*)(buf + sizeof(__uint16_t) + sizeof(t_BFH));
+
+    DIB->biWidth = BitMap_Info_Header->biWidth;
+    DIB->biHeight = BitMap_Info_Header->biHeight;
 
     BitMap_print_header(BitMap_File_Header, BitMap_Info_Header);
 
@@ -225,3 +231,4 @@ void BitMap_convert_RGB888toRGB555(__uint32_t type, __uint32_t size_RGB24, char 
 
     printf("RGB555: 0x%x\n", pixel_data_RGB555[loop - 1]);
 }
+#endif

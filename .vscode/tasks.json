@@ -8,7 +8,9 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
-                "BitMap/BitMap.c", 
+                "BitMap/BitMap.c",
+                "load/load.c",
+                "yuv/yuv.c",
                 "-o",
                 "${fileDirname}/Build/main"
             ],

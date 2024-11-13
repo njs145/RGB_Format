@@ -1,4 +1,11 @@
 ffplay -video_size 426x296 -pixel_format bgra RGBA.RAW
 ffplay -video_size 426x296 -pixel_format bgr24 RGB24.RAW
-ffplay -video_size 426x296 -pixel_format bgr556le RGB565.RAW
+ffplay -video_size 426x296 -pixel_format bgr565le RGB565.RAW
 ffplay -video_size 426x296 -pixel_format bgr555le RGB555.RAW
+
+ffplay -video_size 426x296 -pixel_format yuv444p yuv444p.RAW
+ffplay -video_size 426x296 -pixel_format yuyv422 yuyv422.RAW
+ffplay -video_size 426x296 -pixel_format yuv420p yuv420p.RAW
+
+ffplay -video_size 426x296 -pixel_format nv12 nv12.RAW
+ffplay -video_size 426x296 -pixel_format nv21 nv21.RAW
