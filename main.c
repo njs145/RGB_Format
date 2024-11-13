@@ -49,7 +49,7 @@ int main(void)
     fp_test_nv21 = open("Build/output/nv21.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
     /* BitMap에서 RGB888 추출 */
-    BitMap_Extract_RGB_Data("SampleImage/Bitmap_picture_DOG.bmp", &buff_RGB24, &size_RGB24, &DIB);
+    BitMap_Extract_RGB_Data("SampleImage/Bitmap_picture_DOG_8bpp.bmp", &buff_RGB24, &size_RGB24, &DIB);
 
     /* RGB565 추출 */
     size_RGB565 = (size_RGB24 / 24) * 16;

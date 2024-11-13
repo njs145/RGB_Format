@@ -53,6 +53,7 @@ static void BitMap_print_pixeldata(void);
 void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RGB24_buf, __uint32_t *size, t_DIB *DIB)
 {
     FILE *fp;
+    int fp_test_RGBA = open("Build/output/RGBA.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     int fp_test_RGB24 = open("Build/output/RGB24.RAW", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     char *buf, *RGB8BPP_buf = NULL;
     t_RGBA *RGBA_buf, *RGB8BPP_colorpalette = NULL;
@@ -109,13 +110,13 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
             BitMap_Convert_RGB8BPPtoRGBA((char *)RGBA_buf, RGB8BPP_buf, (size_RGBA / 4), RGB8BPP_colorpalette);
             BitMap_convert_RGBAtoRGB24(RGBA_buf, *RGB24_buf);
 
-            free(RGBA_buf);
         break;
 
         
     }
-
+    write(fp_test_RGBA, (char *)RGBA_buf, size_RGBA);
     write(fp_test_RGB24, (char *)*RGB24_buf, *size);
+    free(RGBA_buf);
     free(buf);
 }
 
@@ -163,7 +164,7 @@ static void BitMap_Convert_RGB8BPPtoRGBA(char *RGBA_buff, char *RGB8BPP_buff, __
     __uint32_t loop;
     __uint8_t RGB8BPP_data;
     t_RGBA *pixel_data_RGBA = (t_RGBA *)RGBA_buff;
-    t_RGBA* colorpalette = ColorPalette;
+    t_RGBA *colorpalette = ColorPalette;
 
     for(loop = 0; loop < size_RGB8BPP; loop ++)
     {
