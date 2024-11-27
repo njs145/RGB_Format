@@ -114,9 +114,9 @@ void BitMap_Extract_RGB_Data(const char *__restrict__ BitMap_filename, char **RG
 
         
     }
-    write(fp_test_RGBA, (char *)RGBA_buf, size_RGBA);
+    // write(fp_test_RGBA, (char *)RGBA_buf, size_RGBA);
     write(fp_test_RGB24, (char *)*RGB24_buf, *size);
-    free(RGBA_buf);
+    // free(RGBA_buf);
     free(buf);
 }
 
